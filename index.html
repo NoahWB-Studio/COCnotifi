@@ -1,0 +1,1460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CoC Raid Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --gold: #c8951a;
+    --gold-light: #f0b429;
+    --gold-pale: #fde68a;
+    --brown-deep: #1a0e04;
+    --brown-dark: #2d1a08;
+    --brown-mid: #4a2c10;
+    --brown-light: #7a4a20;
+    --stone: #8b7355;
+    --stone-light: #b09878;
+    --parchment: #f5e6c8;
+    --parchment-dark: #e8d4a8;
+    --red-war: #c0392b;
+    --red-bright: #e74c3c;
+    --green-ok: #27ae60;
+    --blue-clan: #2980b9;
+    --shadow-gold: 0 0 20px rgba(200,149,26,0.4);
+    --shadow-deep: 0 8px 32px rgba(0,0,0,0.8);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--brown-deep);
+    color: var(--parchment);
+    font-family: 'Crimson Pro', serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(74,44,16,0.6) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(42,26,8,0.8) 0%, transparent 50%),
+      url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23c8951a' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+
+  /* ═══ HEADER ═══ */
+  .site-header {
+    position: relative;
+    text-align: center;
+    padding: 40px 20px 30px;
+    border-bottom: 3px solid var(--gold);
+    background: linear-gradient(180deg, rgba(200,149,26,0.15) 0%, transparent 100%);
+    overflow: hidden;
+  }
+
+  .site-header::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 20'%3E%3Cpath fill='%23c8951a' fill-opacity='0.08' d='M0 0 Q25 20 50 0 Q75 20 100 0 L100 20 L0 20Z'/%3E%3C/svg%3E") repeat-x bottom;
+  }
+
+  .header-emblem {
+    font-size: 64px;
+    display: block;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 16px rgba(200,149,26,0.8));
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  .site-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(22px, 5vw, 42px);
+    color: var(--gold-light);
+    text-shadow: 0 0 30px rgba(200,149,26,0.6), 2px 2px 0 rgba(0,0,0,0.8);
+    letter-spacing: 3px;
+    line-height: 1.2;
+  }
+
+  .site-subtitle {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--stone-light);
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  /* hidden admin trigger — decorative divider dot */
+  .header-ornament {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .ornament-line {
+    height: 1px;
+    width: 80px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+
+  .ornament-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--gold);
+    cursor: default;
+    transition: transform 0.2s;
+  }
+
+  /* The secret admin trigger: the CENTER dot, triple-clicked */
+  .ornament-dot.secret-trigger {
+    position: relative;
+  }
+
+  /* ═══ NAV STATUS BAR ═══ */
+  .status-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    background: rgba(45,26,8,0.8);
+    border-bottom: 1px solid rgba(200,149,26,0.2);
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--stone-light);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red-war);
+    animation: pulse-red 1.5s ease-in-out infinite;
+  }
+
+  .status-dot.active { background: var(--green-ok); animation: pulse-green 2s ease-in-out infinite; }
+
+  @keyframes pulse-red {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192,57,43,0.7); }
+    50% { opacity: 0.7; box-shadow: 0 0 0 6px rgba(192,57,43,0); }
+  }
+  @keyframes pulse-green {
+    0%,100% { opacity: 1; box-shadow: 0 0 0 0 rgba(39,174,96,0.7); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(39,174,96,0); }
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+    text-transform: uppercase;
+  }
+
+  .btn-gold {
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 50%, var(--gold) 100%);
+    color: var(--brown-deep);
+    box-shadow: 0 4px 15px rgba(200,149,26,0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    border: 1px solid rgba(200,149,26,0.5);
+  }
+
+  .btn-gold:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(200,149,26,0.5), inset 0 1px 0 rgba(255,255,255,0.2);
+  }
+
+  .btn-stone {
+    background: var(--brown-mid);
+    color: var(--parchment);
+    border: 1px solid var(--stone);
+  }
+
+  .btn-stone:hover { background: var(--brown-light); transform: translateY(-1px); }
+
+  .btn-danger {
+    background: var(--red-war);
+    color: #fff;
+    border: 1px solid var(--red-bright);
+  }
+
+  .btn-danger:hover { background: var(--red-bright); transform: translateY(-1px); }
+
+  .btn-sm { padding: 7px 14px; font-size: 11px; }
+
+  /* ═══ MAIN LAYOUT ═══ */
+  .main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px 20px;
+  }
+
+  /* ═══ NOTIFICATION SETUP BANNER ═══ */
+  .notif-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, rgba(41,128,185,0.2), rgba(41,128,185,0.05));
+    border: 1px solid rgba(41,128,185,0.4);
+    border-radius: 8px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+  }
+
+  .notif-banner.granted {
+    background: linear-gradient(135deg, rgba(39,174,96,0.2), rgba(39,174,96,0.05));
+    border-color: rgba(39,174,96,0.4);
+  }
+
+  .notif-banner.denied {
+    background: linear-gradient(135deg, rgba(192,57,43,0.2), rgba(192,57,43,0.05));
+    border-color: rgba(192,57,43,0.4);
+  }
+
+  /* ═══ SECTION TITLES ═══ */
+  .section-title {
+    font-family: 'Cinzel', serif;
+    font-size: 18px;
+    color: var(--gold-light);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  /* ═══ ACCOUNT CARDS ═══ */
+  .accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .account-card {
+    background: linear-gradient(145deg, var(--brown-dark) 0%, var(--brown-deep) 100%);
+    border: 1px solid rgba(200,149,26,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+    box-shadow: var(--shadow-deep);
+  }
+
+  .account-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.5;
+  }
+
+  .account-card:hover {
+    border-color: rgba(200,149,26,0.6);
+    box-shadow: var(--shadow-deep), var(--shadow-gold);
+    transform: translateY(-3px);
+  }
+
+  .account-card.raiding {
+    border-color: var(--red-bright);
+    animation: raid-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes raid-pulse {
+    0%,100% { box-shadow: var(--shadow-deep), 0 0 20px rgba(231,76,60,0.3); }
+    50% { box-shadow: var(--shadow-deep), 0 0 40px rgba(231,76,60,0.7); }
+  }
+
+  .account-card.raiding::before {
+    background: linear-gradient(90deg, transparent, var(--red-bright), transparent);
+    opacity: 1;
+    animation: shimmer 0.8s linear infinite;
+  }
+
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 16px;
+  }
+
+  .card-avatar {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--brown-mid), var(--brown-light));
+    border: 2px solid var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+    box-shadow: 0 0 12px rgba(200,149,26,0.3);
+  }
+
+  .card-info h3 {
+    font-family: 'Cinzel', serif;
+    font-size: 16px;
+    color: var(--gold-pale);
+    margin-bottom: 2px;
+  }
+
+  .card-tag {
+    font-size: 12px;
+    color: var(--stone-light);
+    font-family: monospace;
+  }
+
+  .card-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .card-status.safe { background: rgba(39,174,96,0.15); border: 1px solid rgba(39,174,96,0.4); color: #5dbb7f; }
+  .card-status.raiding-status { background: rgba(231,76,60,0.15); border: 1px solid rgba(231,76,60,0.6); color: #f1948a; }
+  .card-status.unknown { background: rgba(138,115,85,0.15); border: 1px solid rgba(138,115,85,0.4); color: var(--stone-light); }
+  .card-status.checking { background: rgba(200,149,26,0.15); border: 1px solid rgba(200,149,26,0.4); color: var(--gold-light); }
+
+  .card-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin: 14px 0;
+    padding: 12px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(200,149,26,0.1);
+  }
+
+  .stat-item { text-align: center; }
+  .stat-value { font-family: 'Cinzel', serif; font-size: 18px; color: var(--gold-light); font-weight: 700; }
+  .stat-label { font-size: 10px; color: var(--stone); letter-spacing: 1px; text-transform: uppercase; }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .last-check {
+    font-size: 11px;
+    color: var(--stone);
+    margin-top: 10px;
+    font-style: italic;
+  }
+
+  /* ═══ ADD ACCOUNT FORM ═══ */
+  .add-account-section {
+    background: linear-gradient(145deg, var(--brown-dark), var(--brown-deep));
+    border: 1px dashed rgba(200,149,26,0.4);
+    border-radius: 12px;
+    padding: 30px;
+    margin-bottom: 30px;
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+
+  @media (max-width: 600px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .accounts-grid { grid-template-columns: 1fr; }
+  }
+
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+
+  label {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--stone-light);
+  }
+
+  input, select, textarea {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,149,26,0.3);
+    border-radius: 6px;
+    padding: 10px 14px;
+    color: var(--parchment);
+    font-family: 'Crimson Pro', serif;
+    font-size: 15px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+  }
+
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(200,149,26,0.15);
+  }
+
+  input::placeholder { color: var(--stone); }
+
+  select option { background: var(--brown-dark); }
+
+  .help-text {
+    font-size: 12px;
+    color: var(--stone);
+    font-style: italic;
+    margin-top: 2px;
+  }
+
+  /* ═══ RAID LOG ═══ */
+  .raid-log {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(200,149,26,0.2);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 30px;
+  }
+
+  .raid-log-header {
+    padding: 14px 20px;
+    background: rgba(200,149,26,0.08);
+    border-bottom: 1px solid rgba(200,149,26,0.2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .log-entry {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(200,149,26,0.08);
+    transition: background 0.2s;
+    animation: slideIn 0.3s ease-out;
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(-10px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .log-entry:hover { background: rgba(200,149,26,0.05); }
+  .log-entry:last-child { border-bottom: none; }
+
+  .log-icon { font-size: 20px; flex-shrink: 0; }
+  .log-msg { flex: 1; font-size: 14px; }
+  .log-msg strong { color: var(--gold-light); font-family: 'Cinzel', serif; font-size: 13px; }
+  .log-time { font-size: 11px; color: var(--stone); white-space: nowrap; font-family: monospace; }
+
+  .empty-log {
+    text-align: center;
+    padding: 40px;
+    color: var(--stone);
+    font-style: italic;
+  }
+
+  /* ═══ MODAL ═══ */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  .modal-overlay.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal {
+    background: var(--brown-dark);
+    border: 1px solid rgba(200,149,26,0.5);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: var(--shadow-deep), var(--shadow-gold);
+    position: relative;
+    transform: translateY(20px);
+    transition: transform 0.3s;
+  }
+
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-title {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 20px;
+    color: var(--gold-light);
+    margin-bottom: 8px;
+    text-shadow: 0 0 20px rgba(200,149,26,0.4);
+  }
+
+  .modal-sub {
+    color: var(--stone-light);
+    font-size: 13px;
+    margin-bottom: 24px;
+    font-style: italic;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--stone);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    transition: color 0.2s;
+  }
+
+  .modal-close:hover { color: var(--gold-light); }
+
+  /* ═══ ADMIN PANEL ═══ */
+  #adminPanel {
+    background: linear-gradient(145deg, #0d0d0d, #1a0e04);
+    border-color: rgba(192,57,43,0.6);
+  }
+
+  #adminPanel .modal-title { color: #e74c3c; text-shadow: 0 0 20px rgba(231,76,60,0.5); }
+
+  .admin-section {
+    margin-bottom: 20px;
+    padding: 16px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+    border: 1px solid rgba(192,57,43,0.2);
+  }
+
+  .admin-section h4 {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #e74c3c;
+    margin-bottom: 12px;
+  }
+
+  .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .admin-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--stone);
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid rgba(192,57,43,0.2);
+  }
+
+  .admin-table td {
+    padding: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    color: var(--parchment-dark);
+    font-family: monospace;
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  /* ═══ TOAST ═══ */
+  #toastContainer {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    pointer-events: none;
+  }
+
+  .toast {
+    background: var(--brown-dark);
+    border: 1px solid rgba(200,149,26,0.4);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: var(--shadow-deep);
+    animation: toastIn 0.3s ease-out forwards;
+    max-width: 320px;
+    pointer-events: all;
+  }
+
+  .toast.raid { border-color: var(--red-bright); background: rgba(192,57,43,0.2); }
+  .toast.success { border-color: var(--green-ok); }
+  .toast.error { border-color: var(--red-war); }
+
+  .toast-icon { font-size: 22px; flex-shrink: 0; }
+  .toast-msg { font-size: 14px; flex: 1; }
+  .toast-msg strong { display: block; font-family: 'Cinzel', serif; font-size: 12px; color: var(--gold-light); margin-bottom: 2px; }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(30px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes toastOut {
+    from { opacity: 1; transform: translateX(0); }
+    to { opacity: 0; transform: translateX(30px); }
+  }
+
+  /* ═══ POLLING CONTROLS ═══ */
+  .poll-controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    background: rgba(45,26,8,0.5);
+    border-radius: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    border: 1px solid rgba(200,149,26,0.15);
+  }
+
+  .poll-controls label {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    color: var(--stone-light);
+    letter-spacing: 1px;
+  }
+
+  .poll-controls select {
+    width: auto;
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  /* ═══ EMPTY STATE ═══ */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--stone);
+  }
+
+  .empty-state .empty-icon { font-size: 64px; display: block; margin-bottom: 16px; opacity: 0.5; }
+  .empty-state h3 { font-family: 'Cinzel', serif; color: var(--stone-light); margin-bottom: 8px; }
+
+  /* ═══ FOOTER ═══ */
+  footer {
+    text-align: center;
+    padding: 24px;
+    color: var(--stone);
+    font-size: 12px;
+    border-top: 1px solid rgba(200,149,26,0.1);
+    font-style: italic;
+  }
+
+  /* ═══ PASSWORD INPUT IN ADMIN ═══ */
+  .pw-overlay {
+    position: absolute;
+    inset: 0;
+    background: var(--brown-dark);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 32px;
+    z-index: 10;
+  }
+
+  .pw-overlay.hidden { display: none; }
+
+  .pw-icon { font-size: 48px; }
+  .pw-title { font-family: 'Cinzel Decorative', cursive; font-size: 16px; color: #e74c3c; }
+  .pw-sub { font-size: 13px; color: var(--stone); font-style: italic; }
+  .pw-input-row { display: flex; gap: 8px; width: 100%; max-width: 280px; }
+  .pw-input-row input { flex: 1; }
+  .pw-error { color: var(--red-bright); font-size: 12px; font-style: italic; display: none; }
+  .pw-error.show { display: block; }
+
+  /* ═══ SCROLLBAR ═══ */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--brown-deep); }
+  ::-webkit-scrollbar-thumb { background: var(--brown-mid); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header class="site-header">
+  <span class="header-emblem">⚔️</span>
+  <h1 class="site-title">CoC Raid Tracker</h1>
+  <p class="site-subtitle">Multi-Account • Real-Time Raid Alerts</p>
+  <div class="header-ornament">
+    <div class="ornament-line"></div>
+    <div class="ornament-dot"></div>
+    <div class="ornament-dot"></div>
+    <!-- Triple-click THIS dot to open admin -->
+    <div class="ornament-dot secret-trigger" id="adminTrigger" title=""></div>
+    <div class="ornament-dot"></div>
+    <div class="ornament-dot"></div>
+    <div class="ornament-line"></div>
+  </div>
+</header>
+
+<!-- ═══ STATUS BAR ═══ -->
+<div class="status-bar">
+  <div class="status-item">
+    <div class="status-dot" id="pollDot"></div>
+    <span id="pollStatus">Polling: Off</span>
+  </div>
+  <div class="status-item">
+    🔔 <span id="notifStatus">Notifications: Not set up</span>
+  </div>
+  <div class="status-item">
+    🛡️ <span id="accountCount">0 Accounts</span>
+  </div>
+</div>
+
+<!-- ═══ MAIN ═══ -->
+<main class="main-container">
+
+  <!-- Notification Banner -->
+  <div class="notif-banner" id="notifBanner">
+    <div>
+      <strong style="font-family:'Cinzel',serif;font-size:14px;">🔔 Enable Raid Notifications</strong>
+      <p style="font-size:13px;margin-top:4px;color:var(--stone-light)">Allow browser notifications so we can alert you the moment your village is attacked — even when this tab is in the background.</p>
+    </div>
+    <button class="btn btn-gold" id="enableNotifBtn" onclick="requestNotificationPermission()">Enable Alerts</button>
+  </div>
+
+  <!-- Polling Controls -->
+  <div class="poll-controls">
+    <label>⏱ Check Interval:</label>
+    <select id="pollInterval">
+      <option value="30000">Every 30 seconds</option>
+      <option value="60000" selected>Every 1 minute</option>
+      <option value="120000">Every 2 minutes</option>
+      <option value="300000">Every 5 minutes</option>
+    </select>
+    <button class="btn btn-gold btn-sm" id="startPollBtn" onclick="togglePolling()">▶ Start Monitoring</button>
+    <span style="font-size:12px;color:var(--stone);font-style:italic">Requires valid Clash of Clans API tokens per account.</span>
+  </div>
+
+  <!-- Accounts Section -->
+  <div class="section-title">🏰 Tracked Accounts</div>
+
+  <div class="accounts-grid" id="accountsGrid">
+    <div class="empty-state" id="emptyState">
+      <span class="empty-icon">🏕️</span>
+      <h3>No Accounts Added Yet</h3>
+      <p>Add your first Clash of Clans account below to begin tracking.</p>
+    </div>
+  </div>
+
+  <!-- Add Account Form -->
+  <div class="add-account-section">
+    <div class="section-title">➕ Add Account</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Account Name / Nickname</label>
+        <input type="text" id="accName" placeholder="e.g. Main Account, TH15 Farm…" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label>Player Tag</label>
+        <input type="text" id="accTag" placeholder="#ABC123XYZ" maxlength="20">
+        <span class="help-text">Your in-game player tag (with or without #)</span>
+      </div>
+      <div class="form-group full">
+        <label>Clash of Clans API Token</label>
+        <input type="password" id="accApiKey" placeholder="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzUxMiJ9…">
+        <span class="help-text">Get your token at <a href="https://developer.clashofclans.com" target="_blank" style="color:var(--gold-light)">developer.clashofclans.com</a> → My Account → Create Key (whitelist your IP)</span>
+      </div>
+      <div class="form-group">
+        <label>Town Hall Level (Display)</label>
+        <select id="accTH">
+          <option value="">Unknown</option>
+          <option value="10">TH 10</option>
+          <option value="11">TH 11</option>
+          <option value="12">TH 12</option>
+          <option value="13">TH 13</option>
+          <option value="14">TH 14</option>
+          <option value="15">TH 15</option>
+          <option value="16">TH 16</option>
+          <option value="17">TH 17</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Emoji / Avatar</label>
+        <input type="text" id="accEmoji" placeholder="🏰" maxlength="4" value="🏰">
+      </div>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <button class="btn btn-gold" onclick="addAccount()">➕ Add Account</button>
+      <button class="btn btn-stone" onclick="testAccount()">🔍 Test Connection</button>
+    </div>
+  </div>
+
+  <!-- Raid Log -->
+  <div class="section-title">📜 Raid History Log</div>
+  <div class="raid-log">
+    <div class="raid-log-header">
+      <span style="font-family:'Cinzel',serif;font-size:13px;color:var(--stone-light);">RECENT EVENTS</span>
+      <button class="btn btn-stone btn-sm" onclick="clearLog()">Clear Log</button>
+    </div>
+    <div id="raidLogBody">
+      <div class="empty-log">No events recorded yet. Start monitoring to see raid alerts here.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  CoC Raid Tracker &nbsp;•&nbsp; Unofficial fan tool &nbsp;•&nbsp; Not affiliated with Supercell &nbsp;•&nbsp;
+  Data from the <a href="https://developer.clashofclans.com" target="_blank" style="color:var(--gold)">Clash of Clans API</a>
+</footer>
+
+<!-- ═══ TOAST CONTAINER ═══ -->
+<div id="toastContainer"></div>
+
+<!-- ═══ DELETE CONFIRM MODAL ═══ -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal" style="max-width:380px">
+    <button class="modal-close" onclick="closeModal('deleteModal')">✕</button>
+    <div class="modal-title" style="font-size:16px">⚠️ Remove Account?</div>
+    <p class="modal-sub">This account and its tracking data will be permanently removed.</p>
+    <div style="display:flex;gap:12px;margin-top:20px">
+      <button class="btn btn-danger" onclick="confirmDelete()">Remove</button>
+      <button class="btn btn-stone" onclick="closeModal('deleteModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN PANEL MODAL ═══ -->
+<div class="modal-overlay" id="adminPanelModal">
+  <div class="modal" id="adminPanel" style="max-width:640px;max-height:85vh;overflow-y:auto">
+    <button class="modal-close" onclick="closeModal('adminPanelModal')">✕</button>
+
+    <!-- Password gate -->
+    <div class="pw-overlay" id="adminPwOverlay">
+      <div class="pw-icon">🔐</div>
+      <div class="pw-title">Admin Access</div>
+      <div class="pw-sub">This area is restricted. Enter the admin password.</div>
+      <div class="pw-input-row">
+        <input type="password" id="adminPwInput" placeholder="Password…" onkeydown="if(event.key==='Enter')checkAdminPw()">
+        <button class="btn btn-danger btn-sm" onclick="checkAdminPw()">Enter</button>
+      </div>
+      <div class="pw-error" id="adminPwError">Incorrect password. Access denied.</div>
+    </div>
+
+    <div class="modal-title">⚙️ Admin Control Panel</div>
+    <p class="modal-sub">System management &amp; debug view — restricted access</p>
+
+    <div class="admin-section">
+      <h4>📊 System Status</h4>
+      <table class="admin-table">
+        <tr><td style="color:var(--stone-light);width:160px">Accounts tracked</td><td id="adminAccCount">—</td></tr>
+        <tr><td style="color:var(--stone-light)">Polling active</td><td id="adminPollState">—</td></tr>
+        <tr><td style="color:var(--stone-light)">Poll interval</td><td id="adminPollInterval">—</td></tr>
+        <tr><td style="color:var(--stone-light)">Notifications</td><td id="adminNotifState">—</td></tr>
+        <tr><td style="color:var(--stone-light)">Log entries</td><td id="adminLogCount">—</td></tr>
+        <tr><td style="color:var(--stone-light)">SW registered</td><td id="adminSWState">—</td></tr>
+      </table>
+    </div>
+
+    <div class="admin-section">
+      <h4>🗂 Registered Accounts (Raw)</h4>
+      <div id="adminAccTable" style="overflow-x:auto"></div>
+    </div>
+
+    <div class="admin-section">
+      <h4>🔧 Admin Actions</h4>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-stone btn-sm" onclick="adminForceCheck()">⚡ Force Check All</button>
+        <button class="btn btn-stone btn-sm" onclick="adminSimulateRaid()">🔴 Simulate Raid Alert</button>
+        <button class="btn btn-danger btn-sm" onclick="adminClearAll()">🗑 Clear All Data</button>
+        <button class="btn btn-stone btn-sm" onclick="adminChangePassword()">🔑 Change Password</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h4>📝 Full Raid Log</h4>
+      <div id="adminRaidLog" style="max-height:180px;overflow-y:auto;font-family:monospace;font-size:11px;color:var(--stone-light);line-height:1.8"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ SCRIPTS ═══ -->
+<script>
+// ─── STATE ────────────────────────────────────────────────────────────
+let accounts = JSON.parse(localStorage.getItem('coc_accounts') || '[]');
+let raidLog  = JSON.parse(localStorage.getItem('coc_raidlog')  || '[]');
+let adminPw  = localStorage.getItem('coc_admin_pw') || 'ClashAdmin2024!';
+let pollTimer = null;
+let pollActive = false;
+let pendingDeleteId = null;
+let adminUnlocked = false;
+let previousStates = {}; // {tag: {attacksWon, defenseCount}}
+
+// ─── SERVICE WORKER (inlined) ─────────────────────────────────────────
+async function registerSW() {
+  if ('serviceWorker' in navigator) {
+    try {
+      const swCode = `
+        self.addEventListener('install', () => self.skipWaiting());
+        self.addEventListener('activate', (e) => e.waitUntil(clients.claim()));
+
+        self.addEventListener('push', (event) => {
+          let data = {};
+          if (event.data) {
+            try { data = event.data.json(); }
+            catch(e) { data = { title: 'CoC Alert', body: event.data.text() }; }
+          }
+          const options = {
+            body: data.body || 'You are being raided!',
+            vibrate: [200, 100, 200, 100, 200],
+            tag: data.tag || 'coc-raid',
+            renotify: true,
+            requireInteraction: true,
+            data: { url: data.url || '/' },
+            actions: [
+              { action: 'view', title: 'View Account' },
+              { action: 'dismiss', title: 'Dismiss' }
+            ]
+          };
+          event.waitUntil(
+            self.registration.showNotification(data.title || 'Raid Alert!', options)
+          );
+        });
+
+        self.addEventListener('notificationclick', (event) => {
+          event.notification.close();
+          if (event.action === 'dismiss') return;
+          event.waitUntil(
+            clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+              for (const client of clientList) {
+                if (client.url && 'focus' in client) return client.focus();
+              }
+              if (clients.openWindow) return clients.openWindow('/');
+            })
+          );
+        });
+      `;
+      const blob = new Blob([swCode], { type: 'application/javascript' });
+      const swUrl = URL.createObjectURL(blob);
+      const reg = await navigator.serviceWorker.register(swUrl);
+      console.log('[SW] Registered via inline blob');
+      return reg;
+    } catch(e) { console.warn('[SW] Registration failed:', e); }
+  }
+}
+
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────
+async function requestNotificationPermission() {
+  if (!('Notification' in window)) {
+    showToast('error', '⚠️', 'Not Supported', 'Your browser does not support notifications.');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  updateNotifUI(perm);
+  if (perm === 'granted') {
+    showToast('success', '🔔', 'Notifications Enabled', 'You will be alerted when raids are detected.');
+    await registerSW();
+  } else {
+    showToast('error', '🔕', 'Blocked', 'Enable notifications in your browser settings.');
+  }
+}
+
+function updateNotifUI(perm) {
+  const banner = document.getElementById('notifBanner');
+  const status = document.getElementById('notifStatus');
+  perm = perm || Notification.permission;
+  if (perm === 'granted') {
+    banner.className = 'notif-banner granted';
+    banner.innerHTML = `<div><strong style="font-family:'Cinzel',serif;font-size:14px;color:#5dbb7f">✅ Notifications Active</strong><p style="font-size:13px;margin-top:4px;color:var(--stone-light)">You will receive instant alerts when your villages are under attack.</p></div>`;
+    status.textContent = 'Notifications: Active';
+  } else if (perm === 'denied') {
+    banner.className = 'notif-banner denied';
+    banner.innerHTML = `<div><strong style="font-family:'Cinzel',serif;font-size:14px;color:var(--red-bright)">🔕 Notifications Blocked</strong><p style="font-size:13px;margin-top:4px;color:var(--stone-light)">Go to your browser settings and allow notifications for this site.</p></div>`;
+    status.textContent = 'Notifications: Blocked';
+  } else {
+    status.textContent = 'Notifications: Not enabled';
+  }
+}
+
+function sendRaidNotification(account) {
+  if (Notification.permission !== 'granted') return;
+  const n = new Notification(`⚔️ ${account.name} is being raided!`, {
+    body: `Your village (${account.tag}) is under attack. Check in now!`,
+    icon: '⚔️',
+    tag: 'raid-' + account.tag,
+    renotify: true,
+    requireInteraction: true,
+  });
+  n.onclick = () => { window.focus(); n.close(); };
+}
+
+// ─── ACCOUNTS ─────────────────────────────────────────────────────────
+function saveAccounts() { localStorage.setItem('coc_accounts', JSON.stringify(accounts)); }
+function saveLog()      { localStorage.setItem('coc_raidlog',  JSON.stringify(raidLog.slice(-200))); }
+
+function addAccount() {
+  const name   = document.getElementById('accName').value.trim();
+  const tag    = document.getElementById('accTag').value.trim().replace(/^#*/,'').toUpperCase();
+  const apiKey = document.getElementById('accApiKey').value.trim();
+  const th     = document.getElementById('accTH').value;
+  const emoji  = document.getElementById('accEmoji').value.trim() || '🏰';
+
+  if (!name)   { showToast('error','⚠️','Missing Field','Please enter an account name.'); return; }
+  if (!tag)    { showToast('error','⚠️','Missing Field','Please enter a player tag.'); return; }
+  if (!apiKey) { showToast('error','⚠️','Missing Field','Please enter a CoC API token.'); return; }
+  if (accounts.find(a => a.tag === tag)) { showToast('error','⚠️','Duplicate','This tag is already tracked.'); return; }
+
+  const acc = { id: Date.now().toString(), name, tag, apiKey, th, emoji, status: 'unknown', lastCheck: null,
+                trophies: null, attackWins: null, defenseWins: null };
+  accounts.push(acc);
+  saveAccounts();
+  renderAccounts();
+  updateStatusBar();
+  showToast('success','✅','Account Added', `${emoji} ${name} is now being tracked.`);
+  addLogEntry('info', acc, 'Account added to tracker');
+
+  // Clear form
+  ['accName','accTag','accApiKey','accEmoji'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('accTH').value = '';
+  document.getElementById('accEmoji').value = '🏰';
+}
+
+async function testAccount() {
+  const tag    = document.getElementById('accTag').value.trim().replace(/^#*/,'').toUpperCase();
+  const apiKey = document.getElementById('accApiKey').value.trim();
+  if (!tag || !apiKey) { showToast('error','⚠️','Missing','Enter tag and API key first.'); return; }
+  showToast('info','🔍','Testing…','Connecting to Clash of Clans API…');
+  const result = await fetchPlayerData(tag, apiKey);
+  if (result.ok) {
+    showToast('success','✅','Connection OK', `Found: ${result.data.name} (TH${result.data.townHallLevel})`);
+    document.getElementById('accName').value = document.getElementById('accName').value || result.data.name;
+    document.getElementById('accTH').value = result.data.townHallLevel;
+  } else {
+    showToast('error','❌','Connection Failed', result.error);
+  }
+}
+
+function deleteAccount(id) {
+  pendingDeleteId = id;
+  openModal('deleteModal');
+}
+
+function confirmDelete() {
+  if (!pendingDeleteId) return;
+  const acc = accounts.find(a => a.id === pendingDeleteId);
+  accounts = accounts.filter(a => a.id !== pendingDeleteId);
+  saveAccounts();
+  renderAccounts();
+  updateStatusBar();
+  closeModal('deleteModal');
+  if (acc) showToast('info','🗑','Removed', `${acc.name} has been removed from tracking.`);
+  pendingDeleteId = null;
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────
+function renderAccounts() {
+  const grid = document.getElementById('accountsGrid');
+  const empty = document.getElementById('emptyState');
+
+  if (accounts.length === 0) {
+    grid.innerHTML = '';
+    grid.appendChild(empty);
+    empty.style.display = 'block';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.innerHTML = '';
+
+  accounts.forEach(acc => {
+    const card = document.createElement('div');
+    card.className = 'account-card' + (acc.status === 'raiding' ? ' raiding' : '');
+    card.id = 'card-' + acc.id;
+
+    const statusClass = acc.status === 'safe' ? 'safe' : acc.status === 'raiding' ? 'raiding-status' : acc.status === 'checking' ? 'checking' : 'unknown';
+    const statusLabel = acc.status === 'safe' ? '🛡 Protected' : acc.status === 'raiding' ? '⚔️ Under Raid!' : acc.status === 'checking' ? '⏳ Checking…' : '❓ Unknown';
+    const lastCheckStr = acc.lastCheck ? `Last checked: ${timeSince(acc.lastCheck)}` : 'Not yet checked';
+
+    card.innerHTML = `
+      <div class="card-header">
+        <div class="card-avatar">${acc.emoji || '🏰'}</div>
+        <div class="card-info">
+          <h3>${escHtml(acc.name)}</h3>
+          <div class="card-tag">#${acc.tag}</div>
+          <div class="card-status ${statusClass}">${statusLabel}</div>
+        </div>
+      </div>
+      <div class="card-stats">
+        <div class="stat-item"><div class="stat-value">${acc.th ? 'TH'+acc.th : '—'}</div><div class="stat-label">Town Hall</div></div>
+        <div class="stat-item"><div class="stat-value">${acc.trophies ?? '—'}</div><div class="stat-label">Trophies</div></div>
+        <div class="stat-item"><div class="stat-value">${acc.defenseWins ?? '—'}</div><div class="stat-label">Defenses</div></div>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-gold btn-sm" onclick="checkNow('${acc.id}')">🔍 Check Now</button>
+        <button class="btn btn-stone btn-sm" onclick="deleteAccount('${acc.id}')">🗑 Remove</button>
+      </div>
+      <div class="last-check">${lastCheckStr}</div>
+    `;
+
+    grid.appendChild(card);
+  });
+}
+
+// ─── API & POLLING ────────────────────────────────────────────────────
+async function fetchPlayerData(tag, apiKey) {
+  const url = `https://api.clashofclans.com/v1/players/%23${encodeURIComponent(tag)}`;
+  try {
+    const res = await fetch(url, {
+      headers: { 'Authorization': `Bearer ${apiKey}` }
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return { ok: false, error: err.message || `HTTP ${res.status}` };
+    }
+    const data = await res.json();
+    return { ok: true, data };
+  } catch(e) {
+    return { ok: false, error: 'Network error — check your API key and that your IP is whitelisted.' };
+  }
+}
+
+async function checkNow(id) {
+  const acc = accounts.find(a => a.id === id);
+  if (!acc) return;
+  acc.status = 'checking';
+  renderCardStatus(acc);
+
+  const result = await fetchPlayerData(acc.tag, acc.apiKey);
+  acc.lastCheck = Date.now();
+
+  if (result.ok) {
+    const d = result.data;
+    const prevDefense = previousStates[acc.tag]?.defenseWins ?? null;
+    acc.trophies    = d.trophies;
+    acc.defenseWins = d.defenseWins;
+    acc.attackWins  = d.attackWins;
+    acc.th          = d.townHallLevel;
+
+    // Detect defense count increase = new raid happened
+    if (prevDefense !== null && d.defenseWins > prevDefense) {
+      acc.status = 'raiding';
+      addLogEntry('raid', acc, `Defense count increased (${prevDefense} → ${d.defenseWins}) — raid detected!`);
+      sendRaidNotification(acc);
+      showToast('raid', '⚔️', `${acc.name} is being raided!`, `Village #${acc.tag} is under attack!`);
+      // Reset to safe after 90 seconds
+      setTimeout(() => {
+        if (acc.status === 'raiding') { acc.status = 'safe'; renderCardStatus(acc); saveAccounts(); }
+      }, 90000);
+    } else {
+      acc.status = 'safe';
+    }
+
+    previousStates[acc.tag] = { defenseWins: d.defenseWins };
+    saveAccounts();
+    renderCardStatus(acc);
+  } else {
+    acc.status = 'unknown';
+    renderCardStatus(acc);
+    addLogEntry('error', acc, `API error: ${result.error}`);
+  }
+}
+
+function renderCardStatus(acc) {
+  const card = document.getElementById('card-' + acc.id);
+  if (!card) { renderAccounts(); return; }
+
+  const statusClass = acc.status === 'safe' ? 'safe' : acc.status === 'raiding' ? 'raiding-status' : acc.status === 'checking' ? 'checking' : 'unknown';
+  const statusLabel = acc.status === 'safe' ? '🛡 Protected' : acc.status === 'raiding' ? '⚔️ Under Raid!' : acc.status === 'checking' ? '⏳ Checking…' : '❓ Unknown';
+
+  card.className = 'account-card' + (acc.status === 'raiding' ? ' raiding' : '');
+  card.querySelector('.card-status').className = 'card-status ' + statusClass;
+  card.querySelector('.card-status').textContent = statusLabel;
+  const statValues = card.querySelectorAll('.stat-value');
+  if (statValues[0]) statValues[0].textContent = acc.th ? 'TH'+acc.th : '—';
+  if (statValues[1]) statValues[1].textContent = acc.trophies ?? '—';
+  if (statValues[2]) statValues[2].textContent = acc.defenseWins ?? '—';
+  card.querySelector('.last-check').textContent = acc.lastCheck ? `Last checked: ${timeSince(acc.lastCheck)}` : 'Not yet checked';
+}
+
+function togglePolling() {
+  pollActive = !pollActive;
+  const btn = document.getElementById('startPollBtn');
+  const dot = document.getElementById('pollDot');
+  const lbl = document.getElementById('pollStatus');
+
+  if (pollActive) {
+    btn.textContent = '⏹ Stop Monitoring';
+    btn.className = 'btn btn-danger btn-sm';
+    dot.classList.add('active');
+    const interval = parseInt(document.getElementById('pollInterval').value);
+    lbl.textContent = `Polling: Every ${interval/1000}s`;
+    runPollCycle();
+    pollTimer = setInterval(runPollCycle, interval);
+    showToast('success','🟢','Monitoring Started','Checking all accounts automatically.');
+    addLogEntry('info', null, `Monitoring started — interval ${interval/1000}s`);
+  } else {
+    btn.textContent = '▶ Start Monitoring';
+    btn.className = 'btn btn-gold btn-sm';
+    dot.classList.remove('active');
+    lbl.textContent = 'Polling: Off';
+    if (pollTimer) clearInterval(pollTimer);
+    pollTimer = null;
+    showToast('info','⏹','Monitoring Stopped','Auto-checking has been paused.');
+    addLogEntry('info', null, 'Monitoring stopped');
+  }
+}
+
+async function runPollCycle() {
+  for (const acc of accounts) {
+    await checkNow(acc.id);
+    await new Promise(r => setTimeout(r, 1200)); // stagger to avoid rate limits
+  }
+}
+
+// ─── RAID LOG ─────────────────────────────────────────────────────────
+function addLogEntry(type, acc, msg) {
+  const entry = { type, accName: acc?.name || null, accTag: acc?.tag || null, msg, time: Date.now() };
+  raidLog.unshift(entry);
+  saveLog();
+  renderLog();
+}
+
+function renderLog() {
+  const body = document.getElementById('raidLogBody');
+  if (raidLog.length === 0) {
+    body.innerHTML = '<div class="empty-log">No events recorded yet. Start monitoring to see raid alerts here.</div>';
+    return;
+  }
+  body.innerHTML = raidLog.slice(0, 50).map(e => `
+    <div class="log-entry">
+      <span class="log-icon">${e.type === 'raid' ? '⚔️' : e.type === 'error' ? '❌' : e.type === 'info' ? '📋' : '🔔'}</span>
+      <div class="log-msg">
+        ${e.accName ? `<strong>${escHtml(e.accName)}</strong> ` : ''}${escHtml(e.msg)}
+      </div>
+      <span class="log-time">${formatTime(e.time)}</span>
+    </div>
+  `).join('');
+}
+
+function clearLog() {
+  raidLog = [];
+  saveLog();
+  renderLog();
+  showToast('info','🗑','Log Cleared','Raid history has been cleared.');
+}
+
+// ─── ADMIN PANEL ──────────────────────────────────────────────────────
+let adminClickCount = 0;
+let adminClickTimer = null;
+
+document.getElementById('adminTrigger').addEventListener('click', () => {
+  adminClickCount++;
+  clearTimeout(adminClickTimer);
+  adminClickTimer = setTimeout(() => { adminClickCount = 0; }, 600);
+  if (adminClickCount >= 3) {
+    adminClickCount = 0;
+    openAdminPanel();
+  }
+});
+
+function openAdminPanel() {
+  adminUnlocked = false;
+  document.getElementById('adminPwOverlay').classList.remove('hidden');
+  document.getElementById('adminPwInput').value = '';
+  document.getElementById('adminPwError').classList.remove('show');
+  openModal('adminPanelModal');
+  setTimeout(() => document.getElementById('adminPwInput').focus(), 300);
+}
+
+function checkAdminPw() {
+  const pw = document.getElementById('adminPwInput').value;
+  if (pw === adminPw) {
+    adminUnlocked = true;
+    document.getElementById('adminPwOverlay').classList.add('hidden');
+    populateAdminPanel();
+  } else {
+    document.getElementById('adminPwError').classList.add('show');
+    document.getElementById('adminPwInput').value = '';
+    document.getElementById('adminPwInput').focus();
+  }
+}
+
+function populateAdminPanel() {
+  document.getElementById('adminAccCount').textContent = accounts.length;
+  document.getElementById('adminPollState').textContent = pollActive ? 'Running ✅' : 'Stopped ❌';
+  document.getElementById('adminPollInterval').textContent = document.getElementById('pollInterval').options[document.getElementById('pollInterval').selectedIndex].text;
+  document.getElementById('adminNotifState').textContent = Notification.permission;
+  document.getElementById('adminLogCount').textContent = raidLog.length;
+  document.getElementById('adminSWState').textContent = 'serviceWorker' in navigator ? '✅' : '❌';
+
+  // Account table
+  const tbl = document.getElementById('adminAccTable');
+  if (accounts.length === 0) { tbl.innerHTML = '<div style="color:var(--stone);font-style:italic;padding:8px">No accounts.</div>'; }
+  else {
+    tbl.innerHTML = `<table class="admin-table">
+      <tr><th>Emoji</th><th>Name</th><th>Tag</th><th>TH</th><th>Status</th><th>API Key (partial)</th></tr>
+      ${accounts.map(a => `<tr>
+        <td>${a.emoji}</td>
+        <td>${escHtml(a.name)}</td>
+        <td>#${a.tag}</td>
+        <td>${a.th || '—'}</td>
+        <td>${a.status}</td>
+        <td>${a.apiKey.slice(0,20)}…</td>
+      </tr>`).join('')}
+    </table>`;
+  }
+
+  // Full log
+  document.getElementById('adminRaidLog').innerHTML = raidLog.length === 0
+    ? '<div style="color:var(--stone);font-style:italic">Empty.</div>'
+    : raidLog.map(e => `[${formatTime(e.time)}] [${e.type.toUpperCase()}] ${e.accName ? e.accName+': ' : ''}${e.msg}`).join('<br>');
+}
+
+function adminForceCheck() {
+  if (!adminUnlocked) return;
+  closeModal('adminPanelModal');
+  runPollCycle().then(() => showToast('success','⚡','Force Check Done','All accounts have been checked.'));
+}
+
+function adminSimulateRaid() {
+  if (!adminUnlocked) return;
+  if (accounts.length === 0) { showToast('error','⚠️','No Accounts','Add an account first to simulate a raid.'); return; }
+  const acc = accounts[0];
+  sendRaidNotification(acc);
+  showToast('raid','⚔️',`${acc.name} is being raided!`,'Simulated raid alert — notification sent.');
+  addLogEntry('raid', acc, '[SIMULATED] Raid alert test');
+}
+
+function adminClearAll() {
+  if (!adminUnlocked) return;
+  if (!confirm('⚠️ Clear ALL accounts, logs, and settings? This cannot be undone.')) return;
+  accounts = []; raidLog = [];
+  localStorage.clear();
+  adminPw = 'ClashAdmin2024!';
+  saveAccounts(); saveLog();
+  renderAccounts(); renderLog(); updateStatusBar();
+  closeModal('adminPanelModal');
+  showToast('info','🗑','All Data Cleared','System has been reset.');
+}
+
+function adminChangePassword() {
+  if (!adminUnlocked) return;
+  const pw = prompt('Enter new admin password:');
+  if (!pw || pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
+  adminPw = pw;
+  localStorage.setItem('coc_admin_pw', pw);
+  showToast('success','🔑','Password Updated','Admin password has been changed.');
+}
+
+// ─── MODALS ───────────────────────────────────────────────────────────
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if (e.target === el) closeModal(el.id); });
+});
+
+// ─── TOAST ────────────────────────────────────────────────────────────
+function showToast(type, icon, title, msg) {
+  const ct = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.innerHTML = `<span class="toast-icon">${icon}</span><div class="toast-msg"><strong>${escHtml(title)}</strong>${escHtml(msg)}</div>`;
+  ct.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'toastOut 0.3s ease-in forwards';
+    setTimeout(() => t.remove(), 300);
+  }, 4500);
+}
+
+// ─── UTILITIES ───────────────────────────────────────────────────────
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function timeSince(ts) {
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 10) return 'just now';
+  if (secs < 60) return `${secs}s ago`;
+  if (secs < 3600) return `${Math.floor(secs/60)}m ago`;
+  return `${Math.floor(secs/3600)}h ago`;
+}
+
+function formatTime(ts) {
+  return new Date(ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}
+
+function updateStatusBar() {
+  document.getElementById('accountCount').textContent = `${accounts.length} Account${accounts.length !== 1 ? 's' : ''}`;
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────
+updateNotifUI();
+renderAccounts();
+renderLog();
+updateStatusBar();
+registerSW();
+
+// Update "X ago" times every 30s
+setInterval(() => { accounts.forEach(a => renderCardStatus(a)); }, 30000);
+</script>
+
+</body>
+</html>
